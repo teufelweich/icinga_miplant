@@ -1,13 +1,11 @@
 #!/usr/bin/python
+import json
 from math import floor
 
-import json
 import requests
-import time
 from requests.auth import HTTPBasicAuth
 
 from miplant import MiPlant
-
 
 UNITS = {"address": "", "firmware": "", "temperature": "°C",
          "light": "lux", "moisture": "%", "conductivity": "µS/cm",
@@ -93,9 +91,6 @@ def get_performance_data(values):  # translates values to performance data for n
                                                               WARN_VALUES[key][0], WARN_VALUES[key][1])))
     # print(performance_data)
     return performance_data
-
-
-timestamp = int(time.time())
 
 highest_state, processed_values = process_values(get_plant_values())
 if highest_state == 3:  # try again, get_plant_values didn't retrieved anything
