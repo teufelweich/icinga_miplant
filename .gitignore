@@ -194,3 +194,4 @@ gen### Kate template
 .*.kate-swp
 .swp.*
 Würde monitoring-ca.crt löschen
+/monitoring-ca.crt
