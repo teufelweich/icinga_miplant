@@ -36,7 +36,7 @@ plantStates = {"address": 3, "firmware": 3, "temperature": 3,
 ICINGA_STATE = ["OK", "WARNING", "CRITICAL", "UNKNOWN"]
 
 
-def get_plant_values():
+def get_plant_values():  # connect to plant sensor and retrieve values
     for plant in MiPlant.discover():
         return {"address": plant.address, "firmware": plant.firmware,
                 "temperature": plant.temperature, "light": plant.light,
@@ -45,10 +45,10 @@ def get_plant_values():
     return None
 
 
-def push_values(values):
+def process_values(values):  # evaluates values based on given ranges
     if values is None:
         return 3
-    highestState = 0
+    highest_state = 0
     for key in values:
         if key in "temperature":  # round temperature to be able to check if it is in range
             temperature, values[key] = values[key], floor(values[key])
@@ -67,22 +67,22 @@ def push_values(values):
             temp = 2
 
         plantStates[key] = temp
-        if highestState < temp:
-            highestState = temp
+        if highest_state < temp:
+            highest_state = temp
         if key in "temperature":  # reset the temperature with the original, unfloored one
             values[key] = temperature
-    return highestState, values
+    return highest_state, values
 
 
-def between(value, r):
+def between(value, r):  # checks if value is in range r
     # print(value,r)
-    if isinstance(value, str):
+    if isinstance(value, str):  # if value is string
         return value == r
     return r[0] <= value <= r[1]
 
 
-def get_performance_data(values):
-    # 'label'=value[UOM];[warn];[crit];[min];[max]
+def get_performance_data(values):  # translates values to performance data for nagios
+    # from server expected syntax: 'label'=value[UOM];[warn];[crit];[min];[max]
     if values is None:
         return None
     performance_data = []
@@ -97,14 +97,14 @@ def get_performance_data(values):
 
 timestamp = int(time.time())
 
-highestState, values = push_values(get_plant_values())
+highest_state, processed_values = process_values(get_plant_values())
 # print(plantStates)
 
-payload = {"exit_status": highestState,
-           "plugin_output": "Plant is " + ICINGA_STATE[highestState],
-           "performance_data": get_performance_data(values)}
+payload = {"exit_status": highest_state,
+           "plugin_output": "Plant is " + ICINGA_STATE[highest_state],
+           "performance_data": get_performance_data(processed_values)}
 # print(payload)
-print(json.dumps(payload))
+# print(json.dumps(payload))
 
 
                   auth=HTTPBasicAuth('api_username', 'api_password'),
