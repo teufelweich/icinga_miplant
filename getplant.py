@@ -98,6 +98,8 @@ def get_performance_data(values):  # translates values to performance data for n
 timestamp = int(time.time())
 
 highest_state, processed_values = process_values(get_plant_values())
+if highest_state == 3:  # try again, get_plant_values didn't retrieved anything
+    highest_state, processed_values = process_values(get_plant_values())
 # print(plantStates)
 
 payload = {"exit_status": highest_state,
