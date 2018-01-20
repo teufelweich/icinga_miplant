@@ -99,21 +99,18 @@ def process_values(values):  # evaluates values based on given ranges
         # checks if unit is not empty string (e.g. address and firmware)
 
         if between(values[key], WARN_VALUES[key]):
-            if args.verbose:
-                print(key, values[key], 'is in warn')
             if between(values[key], OK_VALUES[key]):
-                if args.verbose:
-                    print(key, values[key], 'is in ok')
                 temp = 0
             else:
                 temp = 1
         else:
-            if args.verbose:
-                print(key, values[key], 'is in critical')
             temp = 2
 
+        if args.verbose:
+            print(key, values[key], 'is', ICINGA_STATE[temp])
+
         plant_states[key] = temp
-        if highest_state < temp:
+        if highest_state < temp:  # new highest state
             highest_state = temp
         if key in "temperature":  # reset the temperature with the original, unfloored one
             values[key] = temperature
@@ -136,8 +133,6 @@ def get_performance_data(values):  # translates values to performance data for n
     for key in values:
         performance_data.append(("{}={};{}:{};{}:{};;".format(key, values[key], OK_VALUES[key][0], OK_VALUES[key][1],
                                                               WARN_VALUES[key][0], WARN_VALUES[key][1])))
-    if args.verbose:
-        print("Performance data:", performance_data)
     return performance_data
 
 
@@ -147,17 +142,17 @@ if highest_state == 3:  # try again, get_plant_values didn't retrieved anything
         print("Fetching plant didn't work. Trying again")
     highest_state, processed_values = process_values(get_plant_values())
 
-if args.verbose:
-    print("Plant states:", plant_states)
-
 payload = {"exit_status": highest_state,
            "plugin_output": "Plant is " + ICINGA_STATE[highest_state],
            "performance_data": get_performance_data(processed_values)}
 
 if args.verbose:
-    print("Payload:", json.dumps(payload))
+    print("Payload:", json.dumps(payload, sort_keys=True, indent=4))
 
 r = requests.post(args.url, data=json.dumps(payload), auth=HTTPBasicAuth(args.username, args.password),
                   verify=args.cert, headers={"Accept": "application/json"})
 
-print(r.text)
+
+if args.verbose:
+    print(json.loads(r.text))
+    print(r.reason)
