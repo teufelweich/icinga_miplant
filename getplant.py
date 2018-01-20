@@ -4,6 +4,7 @@ from math import floor
 import argparse
 
 import requests
+import sys
 from requests.auth import HTTPBasicAuth
 
 from miplant import MiPlant
@@ -149,9 +150,24 @@ payload = {"exit_status": highest_state,
 if args.verbose:
     print("Payload:", json.dumps(payload, sort_keys=True, indent=4))
 
-r = requests.post(args.url, data=json.dumps(payload), auth=HTTPBasicAuth(args.username, args.password),
-                  verify=args.cert, headers={"Accept": "application/json"})
-
+for tries in range(0, 2):
+    try:
+        r = requests.post(args.url, data=json.dumps(payload), auth=HTTPBasicAuth(args.username, args.password),
+                          verify=args.cert, headers={"Accept": "application/json"})
+        r.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        print(err)
+        sys.exit(1)
+    except requests.exceptions.Timeout as err_t:
+        if tries > 2:
+            print(err_t)
+            print("Connection timed out too often, exiting")
+            sys.exit(1)
+        print("Connection timed out... trying again")
+    except requests.exceptions.RequestException as e:
+        # catastrophic error
+        print(e)
+        sys.exit(1)
 
 if args.verbose:
     print(json.loads(r.text))
