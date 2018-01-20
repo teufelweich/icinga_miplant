@@ -10,6 +10,7 @@ from miplant import MiPlant
 
 parser = argparse.ArgumentParser(description="Fetch sensor values from Xiaomi FlowerCare over BLE, evaluate them "
                                              "and hand it to the nagios/icinga defined by URL.")
+
 parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
 parser.add_argument("username", help="icinga api username")
 parser.add_argument("password", help="icinga api password")
@@ -67,6 +68,12 @@ plant_states = {"address": 3, "firmware": 3, "temperature": 3,
 
 ICINGA_STATE = ["OK", "WARNING", "CRITICAL", "UNKNOWN"]
 
+#  maybe create type to pass args like "-t 15,25;10,30"
+# def range_list(string):
+#    values = [int(i) for i in string.split(";")]
+#    print(values)
+#
+
 
 def get_plant_values():  # connect to plant sensor and retrieve values
     if args.verbose:
@@ -113,7 +120,6 @@ def process_values(values):  # evaluates values based on given ranges
 
 def between(value, r):  # checks if value is in range r
     if isinstance(value, str):  # if value is string
-        # TODO: check if value is NULL
         return value == r
     return r[0] <= value <= r[1]
 
