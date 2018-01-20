@@ -9,32 +9,57 @@ from requests.auth import HTTPBasicAuth
 from miplant import MiPlant
 
 parser = argparse.ArgumentParser(description="Fetch sensor values from Xiaomi FlowerCare over BLE, evaluate them "
-                                             "and hand it to the nagios/icinga defined by URL")
+                                             "and hand it to the nagios/icinga defined by URL.")
 parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
 parser.add_argument("username", help="icinga api username")
 parser.add_argument("password", help="icinga api password")
 parser.add_argument("cert", help="icinga api certificate path")
+
+parser.add_argument("-a", help="ok value for mac address")
+parser.add_argument("-f", help="ok value for firmware version")
+parser.add_argument("-otu", help="upper ok value for temperature", default=25, type=int)
+parser.add_argument("-otl", help="lower ok value for temperature", default=18, type=int)
+parser.add_argument("-olu", help="upper ok value for light", default=50000, type=int)
+parser.add_argument("-oll", help="lower ok value for light", default=1000, type=int)
+parser.add_argument("-omu", help="upper ok value for moisture", default=50, type=int)
+parser.add_argument("-oml", help="lower ok value for moisture", default=13, type=int)
+parser.add_argument("-ocu", help="upper ok value for conductivity", default=1000, type=int)
+parser.add_argument("-ocl", help="lower ok value for conductivity", default=350, type=int)
+parser.add_argument("-obu", help="upper ok value for battery", default=100, type=int)
+parser.add_argument("-obl", help="lower ok value for battery", default=10, type=int)
+
+parser.add_argument("-wtu", help="upper warn value for temperature", default=30, type=int)
+parser.add_argument("-wtl", help="lower warn value for temperature", default=15, type=int)
+parser.add_argument("-wlu", help="upper warn value for light", default=70000, type=int)
+parser.add_argument("-wll", help="lower warn value for light", default=500, type=int)
+parser.add_argument("-wmu", help="upper warn value for moisture", default=60, type=int)
+parser.add_argument("-wml", help="lower warn value for moisture", default=8, type=int)
+parser.add_argument("-wcu", help="upper warn value for conductivity", default=1300, type=int)
+parser.add_argument("-wcl", help="lower warn value for conductivity", default=100, type=int)
+parser.add_argument("-wbu", help="upper warn value for battery", default=120, type=int)
+parser.add_argument("-wbl", help="lower warn value for battery", default=3, type=int)
+
 args = parser.parse_args()
 
 UNITS = {"address": "", "firmware": "", "temperature": "°C",
          "light": "lux", "moisture": "%", "conductivity": "µS/cm",
          "battery": "%"}
 
-OK_VALUES = {"address": "c4:7c:8d:62:74:3b",
-             "firmware": "'3.1.8",
-             "temperature": [18, 25],
-             "light": [2500, 50000],
-             "moisture": [13, 50],
-             "conductivity": [350, 1000],
-             "battery": [10, 100]}
+OK_VALUES = {"address": args.a,
+             "firmware": args.f,
+             "temperature": [args.otl, args.otu],
+             "light": [args.oll, args.olu],
+             "moisture": [args.oml, args.omu],
+             "conductivity": [args.ocl, args.ocu],
+             "battery": [args.obl, args.obu]}
 
-WARN_VALUES = {"address": "c4:7c:8d:62:74:3b",
-               "firmware": "'3.1.8",
-               "temperature": [15, 30],
-               "light": [1000, 70000],
-               "moisture": [8, 60],
-               "conductivity": [100, 1300],
-               "battery": [3, 120]}
+WARN_VALUES = {"address": OK_VALUES["address"],
+               "firmware": OK_VALUES["firmware"],
+               "temperature": [args.wtl, args.wtu],
+               "light": [args.wll, args.wlu],
+               "moisture": [args.wml, args.wmu],
+               "conductivity": [args.wcl, args.wcu],
+               "battery": [args.wbl, args.wbu]}
 
 plant_states = {"address": 3, "firmware": 3, "temperature": 3,
                 "light": 3, "moisture": 3, "conductivity": 3,
@@ -88,6 +113,7 @@ def process_values(values):  # evaluates values based on given ranges
 
 def between(value, r):  # checks if value is in range r
     if isinstance(value, str):  # if value is string
+        # TODO: check if value is NULL
         return value == r
     return r[0] <= value <= r[1]
 
