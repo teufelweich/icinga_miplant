@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser(description="Fetch sensor values from Xiaomi Fl
 parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
 parser.add_argument("username", help="icinga api username")
 parser.add_argument("password", help="icinga api password")
+parser.add_argument("url", help="icinga api url")
 parser.add_argument("cert", help="icinga api certificate path")
 
 parser.add_argument("-a", help="ok value for mac address")
@@ -67,6 +68,7 @@ plant_states = {"address": 3, "firmware": 3, "temperature": 3,
                 "battery": 3}
 
 ICINGA_STATE = ["OK", "WARNING", "CRITICAL", "UNKNOWN"]
+
 
 #  maybe create type to pass args like "-t 15,25;10,30"
 # def range_list(string):
@@ -155,5 +157,7 @@ payload = {"exit_status": highest_state,
 if args.verbose:
     print("Payload:", json.dumps(payload))
 
-                  auth=HTTPBasicAuth(args.username, args.password),
+r = requests.post(args.url, data=json.dumps(payload), auth=HTTPBasicAuth(args.username, args.password),
                   verify=args.cert, headers={"Accept": "application/json"})
+
+print(r.text)
