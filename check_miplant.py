@@ -81,11 +81,14 @@ ICINGA_STATE = ["OK", "WARNING", "CRITICAL", "UNKNOWN"]
 def get_plant_values():  # connect to plant sensor and retrieve values
     if args.verbose:
         print("Try getting plant stats")
-    for plant in MiPlant.discover():
-        return {"address": plant.address, "firmware": plant.firmware,
-                "temperature": plant.temperature, "light": plant.light,
-                "moisture": plant.moisture, "conductivity": plant.conductivity,
-                "battery": plant.battery}
+    try:
+        for plant in MiPlant.discover():
+            return {"address": plant.address, "firmware": plant.firmware,
+                    "temperature": plant.temperature, "light": plant.light,
+                    "moisture": plant.moisture, "conductivity": plant.conductivity,
+                    "battery": plant.battery}
+    except Exception as error:
+        print(error)
     return None
 
 
