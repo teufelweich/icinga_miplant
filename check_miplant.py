@@ -94,11 +94,6 @@ def process_values(values):  # evaluates values based on given ranges
         return 3
     highest_state = 0
     for key in values:
-        if key in "temperature":  # round temperature to be able to check if it is in range
-            temperature, values[key] = values[key], floor(values[key])
-
-        # checks if unit is not empty string (e.g. address and firmware)
-
         if between(values[key], WARN_VALUES[key]):
             if between(values[key], OK_VALUES[key]):
                 temp = 0
@@ -113,15 +108,13 @@ def process_values(values):  # evaluates values based on given ranges
         plant_states[key] = temp
         if highest_state < temp:  # new highest state
             highest_state = temp
-        if key in "temperature":  # reset the temperature with the original, unfloored one
-            values[key] = temperature
     return highest_state, values
 
 
 def between(value, r):  # checks if value is in range r
     if isinstance(value, str):  # if value is string
         return value == r
-    return r[0] <= value <= r[1]
+    return r[0] <= floor(value) <= r[1]
 
 
 def get_performance_data(values):  # translates values to performance data for nagios
