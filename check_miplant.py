@@ -1,10 +1,11 @@
-#!/usr/bin/python3
+#!/usr/bin/sudo python3
 import json
 from math import floor
 import argparse
 
 import requests
 import sys
+from bluepy.btle import BTLEException
 from requests.auth import HTTPBasicAuth
 
 from miplant import MiPlant
@@ -72,10 +73,9 @@ ICINGA_STATE = ["OK", "WARNING", "CRITICAL", "UNKNOWN"]
 
 
 #  maybe create type to pass args like "-t 15,25;10,30"
-# def range_list(string):
-#    values = [int(i) for i in string.split(";")]
-#    print(values)
-#
+def range_list(string):
+    values = [int(i) for i in string.split(",")]
+    print(values)
 
 
 def get_plant_values():  # connect to plant sensor and retrieve values
@@ -87,14 +87,19 @@ def get_plant_values():  # connect to plant sensor and retrieve values
                     "temperature": plant.temperature, "light": plant.light,
                     "moisture": plant.moisture, "conductivity": plant.conductivity,
                     "battery": plant.battery}
+    except BTLEException as bt_error:
+        print(bt_error)
+        print("\nMaybe forgot to run with root?")
+        sys.exit(1)
     except Exception as error:
         print(error)
+        sys.exit(1)
     return None
 
 
 def process_values(values):  # evaluates values based on given ranges
     if values is None:
-        return 3
+        return 3, None
     highest_state = 0
     for key in values:
         if between(values[key], WARN_VALUES[key]):
@@ -132,8 +137,9 @@ def get_performance_data(values):  # translates values to performance data for n
                                                               WARN_VALUES[key][0], WARN_VALUES[key][1])))
     return performance_data
 
-
-highest_state, processed_values = process_values(get_plant_values())
+plant_values = get_plant_values()
+print(plant_values)
+highest_state, processed_values = process_values(plant_values)
 if highest_state == 3:  # try again, get_plant_values didn't retrieved anything
     if args.verbose:
         print("Fetching plant didn't work. Trying again")
